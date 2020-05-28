@@ -21,7 +21,8 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 	// fmt.Printf("Created client: %f", c)
 	// doUnary(c)
-	doServerStreaming(c)
+	// doServerStreaming(c)
+	doClientStreaming(c)
 }
 
 func doUnary(c calculatorpb.CalculatorServiceClient) {
@@ -56,4 +57,28 @@ func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
 		}
 		fmt.Println(res.GetPrimeFactor())
 	}
+}
+
+func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Starting to do a ComputeAverage Client Streaming RPC...")
+
+	stream, err := c.ComputeAverage(context.Background()) //最初の決り文句的なもの
+	if err != nil {
+		log.Fatalf("Error while opening stream:%v", err)
+	}
+
+	numbers := []int32{6, 7, 8, 9} //テストの値
+
+	for _, number := range numbers { //numbersを分解
+		fmt.Printf("Sending number %v\n", number)
+		stream.Send(&calculatorpb.ComputeAverageRequest{
+			Number: number,
+		})
+	}
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error while receiving response: %v", err)
+	}
+
+	fmt.Printf("The Average is: %v\n", res.GetAverage())
 }
