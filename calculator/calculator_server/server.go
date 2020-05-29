@@ -47,8 +47,8 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberDecompositi
 func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
 	fmt.Printf("Received ComputeAverage RPC\n")
 
-	sum := int32(0)
-	count := 0
+	sum := int32(0) //sum += req.GetNumber()ここで数字を貯めるために使う
+	count := 0      //最後に割るために使う
 
 	for {
 		req, err := stream.Recv()
@@ -63,6 +63,33 @@ func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAvera
 		}
 		sum += req.GetNumber()
 		count++
+	}
+}
+
+func (*server) FindMaximum(stream calculatorpb.CalculatorService_FindMaximumServer) error {
+	fmt.Printf("Recived FindMaximum RPC")
+	maximum := int32(0)
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+			return err
+		}
+		number := req.GetNumber()
+		if number > maximum {
+			maximum = number
+			sendErr := stream.Send(&calculatorpb.FindMaximumResponse{
+				Maximum: maximum,
+			})
+			if sendErr != nil {
+				log.Fatalf("Error while sending data to client: %v", err)
+				return err
+			}
+		}
 	}
 }
 
